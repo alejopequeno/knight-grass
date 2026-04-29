@@ -205,20 +205,20 @@ canvas {
   text-transform: uppercase;
   cursor: pointer;
   transition:
-    transform 0.12s ease,
-    box-shadow 0.2s ease,
-    background 0.2s ease;
-  box-shadow: 0 12px 28px rgba(255, 255, 255, 0.08);
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.12s ease;
 }
 
 .start-screen__play:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 16px 36px rgba(255, 255, 255, 0.14);
+  background: linear-gradient(180deg, #c9d4e0 0%, #95a3b3 100%);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #05070a;
 }
 
 .start-screen__play:active {
-  transform: translateY(0);
-  box-shadow: 0 6px 14px rgba(255, 255, 255, 0.1);
+  transform: scale(0.96);
 }
 
 .start-screen__hint {
