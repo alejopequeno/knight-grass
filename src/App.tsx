@@ -1,6 +1,6 @@
 import { Canvas } from '@react-three/fiber'
 import { Physics } from '@react-three/rapier'
-import { Suspense, useRef, useState } from 'react'
+import { Suspense, useCallback, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { AudioBoot, AudioController } from './audio/audio-controller'
 import { AudioFeedback } from './audio/audio-feedback'
@@ -19,6 +19,7 @@ function App() {
   const characterRef = useRef<CharacterHandle>(null)
   const cameraYawRef = useRef(0)
   const [started, setStarted] = useState(false)
+  const handlePlay = useCallback(() => setStarted(true), [])
 
   return (
     <AudioController>
@@ -72,7 +73,7 @@ function App() {
         </>
       )}
 
-      {!started && <StartScreen onPlay={() => setStarted(true)} />}
+      {!started && <StartScreen onPlay={handlePlay} />}
     </AudioController>
   )
 }

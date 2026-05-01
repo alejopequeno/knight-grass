@@ -158,7 +158,7 @@ export function Grass({ characterRef }: GrassProps) {
   }, [])
 
   const cloudTexture = useLoader(THREE.TextureLoader, '/cloud.jpg')
-  useMemo(() => {
+  useEffect(() => {
     cloudTexture.wrapS = cloudTexture.wrapT = THREE.RepeatWrapping
     cloudTexture.colorSpace = THREE.SRGBColorSpace
   }, [cloudTexture])
@@ -197,7 +197,11 @@ export function Grass({ characterRef }: GrassProps) {
     [cloudTexture, grassCard],
   )
 
-  useMemo(() => {
+  // Sync leva controls into the shader uniforms. This is a side effect (we
+  // mutate `uniforms` in place rather than returning a new value), so it
+  // belongs in useEffect — useMemo here was misleading and listed `uniforms`
+  // as a dep even though it mutates it.
+  useEffect(() => {
     uniforms.uPatchSize.value = patchSize
     uniforms.uBendStrength.value = bendStrength
     uniforms.uWindAmount.value = windAmount
@@ -220,6 +224,7 @@ export function Grass({ characterRef }: GrassProps) {
     uniforms.uAmbientStrength.value = ambientStrength
     uniforms.uTintStrength.value = tintStrength
   }, [
+    uniforms,
     patchSize,
     bendStrength,
     windAmount,
@@ -241,7 +246,6 @@ export function Grass({ characterRef }: GrassProps) {
     groundAmbient,
     ambientStrength,
     tintStrength,
-    uniforms,
   ])
 
   // build per-instance transforms + attributes whenever count or patch changes

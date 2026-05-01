@@ -174,10 +174,6 @@ export function Paladin({ stateRef, speedRef, onActionFinished }: Props) {
         actions.idle.play()
         actions.idle.setEffectiveWeight(1)
 
-        console.log(
-          `[paladin] ready — ${skinnedMeshes.length} meshes, ${STATE_KEYS.length} clips, 1 mixer`,
-        )
-
         setAssets({ model: modelRaw, mixer, actions })
       })
       .catch((err) => {
@@ -232,7 +228,6 @@ export function Paladin({ stateRef, speedRef, onActionFinished }: Props) {
         duration: to.getClip().duration,
         notified: false,
       }
-      console.log(`[paladin] one-shot ${next} duration=${to.getClip().duration.toFixed(2)}s`)
     } else {
       oneShot.current = null
     }
@@ -258,18 +253,15 @@ export function Paladin({ stateRef, speedRef, onActionFinished }: Props) {
     }
 
     // One-shot completion timer. Notify slightly before the actual end so
-    // the next transition can fade in cleanly.
+    // the next transition can fade in cleanly. The safety branch covers the
+    // case where the timer somehow misses its window — without it the parent
+    // lock could stick and freeze every animation.
     const os = oneShot.current
     if (os && !os.notified) {
       os.elapsed += delta
       const notifyAt = Math.max(0.1, os.duration - 0.1)
       const safetyAt = os.duration * ONE_SHOT_SAFETY_MULT
-      if (os.elapsed >= notifyAt) {
-        os.notified = true
-        console.log(`[paladin] notify finished: ${os.key} at ${os.elapsed.toFixed(2)}s`)
-        onFinishedRef.current?.(os.key)
-      } else if (os.elapsed >= safetyAt) {
-        console.warn(`[paladin] safety force-finish: ${os.key} at ${os.elapsed.toFixed(2)}s`)
+      if (os.elapsed >= notifyAt || os.elapsed >= safetyAt) {
         os.notified = true
         onFinishedRef.current?.(os.key)
       }

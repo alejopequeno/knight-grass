@@ -22,6 +22,9 @@ export function AudioController({ children }: { children: ReactNode }) {
       }),
   )
 
+  // Single lifecycle effect: kick off the load on mount, dispose on unmount.
+  // `cancelled` guards the async catch so a teardown mid-load doesn't log a
+  // misleading warning.
   useEffect(() => {
     let cancelled = false
     suno.loadAll().catch((err) => {
@@ -29,11 +32,6 @@ export function AudioController({ children }: { children: ReactNode }) {
     })
     return () => {
       cancelled = true
-    }
-  }, [suno])
-
-  useEffect(() => {
-    return () => {
       void suno.dispose()
     }
   }, [suno])

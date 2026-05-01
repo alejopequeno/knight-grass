@@ -7,8 +7,13 @@ const GROUND_SIZE = 400
 const MESH_SUBDIVISIONS = 192 // PlaneGeometry cell count → 193 vertices per side
 const COLLIDER_RES = MESH_SUBDIVISIONS + 1 // match the mesh sampling exactly
 
+// Procedural thatch-texture knobs.
+const THATCH_TEXTURE_SIZE = 512
+const THATCH_STRAND_COUNT = 8000
+const THATCH_SHADOW_BLOB_COUNT = 30
+
 function buildThatchTexture(): THREE.Texture {
-  const size = 512
+  const size = THATCH_TEXTURE_SIZE
   const canvas = document.createElement('canvas')
   canvas.width = size
   canvas.height = size
@@ -17,7 +22,7 @@ function buildThatchTexture(): THREE.Texture {
   ctx.fillStyle = '#0c1420'
   ctx.fillRect(0, 0, size, size)
 
-  for (let i = 0; i < 8000; i++) {
+  for (let i = 0; i < THATCH_STRAND_COUNT; i++) {
     const x = Math.random() * size
     const y = Math.random() * size
     const len = 4 + Math.random() * 10
@@ -34,7 +39,7 @@ function buildThatchTexture(): THREE.Texture {
     ctx.stroke()
   }
 
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < THATCH_SHADOW_BLOB_COUNT; i++) {
     const x = Math.random() * size
     const y = Math.random() * size
     const r = 30 + Math.random() * 80

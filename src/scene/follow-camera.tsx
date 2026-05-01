@@ -60,7 +60,10 @@ export function FollowCamera({ targetRef, yawRef }: FollowCameraProps) {
       document.removeEventListener('pointerlockchange', handlePointerLockChange)
       document.removeEventListener('mousemove', handleMouseMove)
     }
-  }, [gl, yawRef])
+    // `yawRef` is a stable ref (its identity never changes) so it doesn't
+    // belong in the deps. We list `gl` because the WebGL context can be
+    // recreated; if that ever happens we need to re-attach to the new canvas.
+  }, [gl])
 
   useFrame((_, delta) => {
     const target = targetRef.current

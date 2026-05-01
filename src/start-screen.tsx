@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 
 type Props = {
   onPlay: () => void
 }
 
-const CONTROLS: Array<{ keys: string[]; label: string }> = [
+type Control = { keys: string[]; label: string }
+
+const CONTROLS: readonly Control[] = [
   { keys: ['W', 'A', 'S', 'D'], label: 'Move' },
   { keys: ['Shift'], label: 'Run' },
   { keys: ['Space'], label: 'Jump' },
@@ -13,16 +15,18 @@ const CONTROLS: Array<{ keys: string[]; label: string }> = [
   { keys: ['Mouse'], label: 'Look around' },
 ]
 
+// Should match the .start-screen opacity transition in index.css. We wait it
+// out before mounting the game so the splash doesn't flash off mid-fade.
+const FADE_OUT_MS = 380
+
 export function StartScreen({ onPlay }: Props) {
   const [leaving, setLeaving] = useState(false)
 
-  const handlePlay = () => {
+  const handlePlay = useCallback(() => {
     if (leaving) return
     setLeaving(true)
-    // Wait for fade-out to finish before mounting the game so the user
-    // doesn't see the splash flash off mid-transition.
-    setTimeout(onPlay, 380)
-  }
+    setTimeout(onPlay, FADE_OUT_MS)
+  }, [leaving, onPlay])
 
   return (
     <div className={`start-screen ${leaving ? 'start-screen--leaving' : ''}`}>

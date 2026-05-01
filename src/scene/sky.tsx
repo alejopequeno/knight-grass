@@ -1,7 +1,7 @@
 import { useFrame, useThree } from '@react-three/fiber'
 import { Environment, Stars } from '@react-three/drei'
 import { useControls } from 'leva'
-import { useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { Sky as ThreeSky } from 'three/examples/jsm/objects/Sky.js'
 import { sceneState } from '../lib/scene-state'
@@ -49,7 +49,9 @@ export function Sky() {
     showStars: true,
   })
 
-  useMemo(() => {
+  // Push leva controls into the sky material, lights, and tone mapping. All
+  // side effects, no derived value — useEffect is the right hook.
+  useEffect(() => {
     const u = sky.material.uniforms
     u.turbidity.value = turbidity
     u.rayleigh.value = rayleigh
@@ -62,20 +64,16 @@ export function Sky() {
     u.sunPosition.value.copy(sunDirection)
     sceneState.sunDirection.copy(sunDirection)
 
-    if (sunLightRef.current) {
-      // place the sun light far along the sun direction so it casts from the
-      // actual sun position — character/grass receive warm directional light
-      sunLightRef.current.position.copy(sunDirection).multiplyScalar(120)
-      sunLightRef.current.intensity = sunIntensity
+    const sunLight = sunLightRef.current
+    if (sunLight) {
+      sunLight.position.copy(sunDirection).multiplyScalar(120)
+      sunLight.intensity = sunIntensity
     }
-    if (moonLightRef.current) {
-      // counter-fill from the opposite hemisphere — cooler, weaker
-      moonLightRef.current.position.copy(sunDirection).multiplyScalar(-100)
-      moonLightRef.current.position.y = Math.max(
-        50,
-        Math.abs(moonLightRef.current.position.y),
-      )
-      moonLightRef.current.intensity = moonIntensity
+    const moonLight = moonLightRef.current
+    if (moonLight) {
+      moonLight.position.copy(sunDirection).multiplyScalar(-100)
+      moonLight.position.y = Math.max(50, Math.abs(moonLight.position.y))
+      moonLight.intensity = moonIntensity
     }
 
     gl.toneMappingExposure = exposure
