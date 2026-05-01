@@ -13,6 +13,7 @@ import { Ground } from './scene/ground'
 import { Post } from './scene/post'
 import { Sky } from './scene/sky'
 import { useKeyboard } from './controls/use-keyboard'
+import { Curtain } from './curtain'
 
 function App() {
   const movement = useKeyboard()
@@ -63,6 +64,7 @@ function App() {
         <kbd>RMB</kbd>/<kbd>Q</kbd> block &nbsp;·&nbsp; click to look
       </div>
       <AudioHud />
+      <Curtain />
     </AudioController>
   )
 }
