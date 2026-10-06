@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+test-artifacts/
+test-results/
+playwright-report/
+.superpowers/
+.font-work/

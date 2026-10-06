@@ -1,24 +1,20 @@
 import { Suno } from '@joycostudio/suno'
-import { SunoProvider, useAutoUnlock, useSuno } from '@joycostudio/suno/react'
+import {
+  SunoProvider,
+  useAutoUnlock,
+  useSource,
+  useSuno,
+  useSunoState,
+} from '@joycostudio/suno/react'
 import { useEffect, useState, type ReactNode } from 'react'
-
-export const AUDIO_KEYS = {
-  wind: 'wind',
-  steps: 'steps',
-} as const
-
-const MANIFEST = {
-  [AUDIO_KEYS.wind]: { src: '/sounds/wind.mp3', loop: true, volume: 0.45 },
-  [AUDIO_KEYS.steps]: { src: '/sounds/grass-steps.mp3', loop: true, volume: 0.7 },
-}
+import { AUDIO_KEYS, AUDIO_MANIFEST } from './audio-manifest'
 
 export function AudioController({ children }: { children: ReactNode }) {
   const [suno] = useState(
     () =>
       new Suno({
-        manifest: MANIFEST,
+        manifest: AUDIO_MANIFEST,
         muted: false,
-        mutePersistKey: 'walk-grass-muted',
       }),
   )
 
@@ -27,8 +23,8 @@ export function AudioController({ children }: { children: ReactNode }) {
   // misleading warning.
   useEffect(() => {
     let cancelled = false
-    suno.loadAll().catch((err) => {
-      if (!cancelled) console.warn('[audio] loadAll failed', err)
+    suno.loadAll().catch((error: unknown) => {
+      if (!cancelled) console.warn('[audio] loadAll failed', error)
     })
     return () => {
       cancelled = true
@@ -39,32 +35,18 @@ export function AudioController({ children }: { children: ReactNode }) {
   return <SunoProvider value={suno}>{children}</SunoProvider>
 }
 
-// Auto-unlock + start ambient wind once the source is loaded.
+// Unlock on the first gesture, then start the ambient wind as soon as the
+// context is running and the source has loaded — event-driven, no polling.
 export function AudioBoot() {
   const suno = useSuno()
   useAutoUnlock(suno)
+  const { isUnlocked } = useSunoState(suno)
+  const wind = useSource(AUDIO_KEYS.wind, suno)
 
   useEffect(() => {
-    let stopped = false
-
-    function tryStart() {
-      if (stopped) return
-      if (!suno.isUnlocked) return
-      if (!suno.has(AUDIO_KEYS.wind)) return
-      const playing = suno.playing()
-      if (!playing.some((p) => p.key === AUDIO_KEYS.wind)) {
-        suno.get(AUDIO_KEYS.wind).play()
-      }
-    }
-
-    const id = setInterval(tryStart, 200)
-    tryStart()
-
-    return () => {
-      stopped = true
-      clearInterval(id)
-    }
-  }, [suno])
+    if (!isUnlocked || !wind || wind.isPlaying) return
+    wind.source.play()
+  }, [isUnlocked, wind])
 
   return null
 }

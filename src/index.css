@@ -1,3 +1,27 @@
+@font-face {
+  font-family: 'Cinzel';
+  src: url('/fonts/cinzel-variable.woff2') format('woff2');
+  font-weight: 400 900;
+  font-display: swap;
+}
+
+:root {
+  --color-backdrop: #05070c;
+  --color-text: rgba(255, 255, 255, 0.85);
+  /* Ivory ink and gilt trim: the same palette as the in-world story text. */
+  --color-ink: #ece3cc;
+  --color-ink-muted: rgba(236, 227, 204, 0.72);
+  --color-gilt: #c9a45c;
+  --color-gilt-soft: rgba(201, 164, 92, 0.45);
+  --color-plate: rgba(8, 10, 16, 0.55);
+  --color-plate-hover: rgba(8, 10, 16, 0.75);
+  --color-shade: rgba(5, 7, 12, 0.6);
+  --color-focus-ring: #ffd27a;
+  --font-display: 'Cinzel', 'Trajan Pro', Georgia, serif;
+  --hud-inset: 24px;
+  --hud-shade-height: 120px;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -10,61 +34,146 @@ body,
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #87ceeb;
+  background: var(--color-backdrop);
   font-family: system-ui, -apple-system, sans-serif;
   color: #fff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 canvas {
   display: block;
-  outline: none;
+}
+
+/* Night settles at the foot of the screen so the HUD reads over bright grass. */
+#root::after {
+  content: '';
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: 0;
+  z-index: 5;
+  height: var(--hud-shade-height);
+  background: linear-gradient(in oklab to top, var(--color-shade), transparent);
+  pointer-events: none;
 }
 
 .hud {
   position: fixed;
-  bottom: 24px;
-  left: 24px;
+  inset-block-end: var(--hud-inset);
+  inset-inline-start: var(--hud-inset);
   z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  /* Space groups the controls: 6px inside a group, 24px between groups. */
+  gap: 8px 24px;
+  max-width: calc(100% - 2 * var(--hud-inset) - 180px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-display);
   font-size: 13px;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.85);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  line-height: 1.5;
+  color: var(--color-ink-muted);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
   pointer-events: none;
   user-select: none;
 }
 
+.hud li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
 .hud kbd {
-  display: inline-block;
-  padding: 2px 6px;
-  margin: 0 2px;
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  font-family: ui-monospace, monospace;
-  font-size: 12px;
+  display: inline-grid;
+  place-items: center;
+  min-width: 24px;
+  padding: 2px 7px;
+  border: 1px solid var(--color-gilt-soft);
+  border-radius: 2px;
+  background: var(--color-plate);
+  box-shadow: inset 0 -1px 0 rgba(201, 164, 92, 0.2);
+  color: var(--color-ink);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  text-shadow: none;
 }
 
 .audio-hud {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
+  inset-block-end: var(--hud-inset);
+  inset-inline-end: var(--hud-inset);
   z-index: 10;
-  padding: 6px 12px;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  color: rgba(255, 255, 255, 0.85);
-  font-family: ui-monospace, monospace;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 6px 14px;
+  border: 1px solid var(--color-gilt-soft);
+  border-radius: 2px;
+  background: var(--color-plate);
+  color: var(--color-ink);
+  font-family: var(--font-display);
   font-size: 12px;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   cursor: pointer;
-  transition: background 0.15s;
+  transition-property: background-color, border-color, scale;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
 }
 
-.audio-hud:hover {
-  background: rgba(0, 0, 0, 0.6);
+.audio-hud__state {
+  color: var(--color-ink-muted);
+  font-weight: 500;
+}
+
+.audio-hud__state::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  margin-inline-end: 8px;
+  vertical-align: middle;
+  rotate: 45deg;
+  background: var(--color-gilt-soft);
+}
+
+@media (hover: hover) {
+  .audio-hud:hover {
+    background: var(--color-plate-hover);
+    border-color: var(--color-gilt);
+  }
+}
+
+.audio-hud:active {
+  scale: 0.96;
+}
+
+.audio-hud:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 3px;
+}
+
+/* Where the controls no longer fit beside it, the sound toggle moves to the
+   top corner and the hints take the full width. */
+@media (max-width: 52rem) {
+  .hud {
+    max-width: calc(100% - 2 * var(--hud-inset));
+  }
+
+  .audio-hud {
+    inset-block-end: auto;
+    inset-block-start: var(--hud-inset);
+  }
 }
 
 /* ---------- Loading curtain ---------- */
@@ -81,4 +190,65 @@ canvas {
 .curtain--leaving {
   opacity: 0;
   pointer-events: none;
+}
+
+.curtain--error {
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  text-align: center;
+  color: var(--color-text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .curtain,
+  .audio-hud {
+    transition: none;
+  }
+
+  .audio-hud:active {
+    scale: none;
+  }
+}
+
+/* ---------- WebGPU gate ---------- */
+
+.gate {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-content: center;
+  gap: 12px;
+  padding: 16px;
+  text-align: center;
+  background: var(--color-backdrop);
+  color: var(--color-text);
+}
+
+.gate__title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.gate__body {
+  margin: 0;
+  max-width: 44ch;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* ---------- Screen-reader-only ---------- */
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }

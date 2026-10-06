@@ -1,90 +1,67 @@
 import { useFrame } from '@react-three/fiber'
 import { useSuno } from '@joycostudio/suno/react'
-import { useEffect, useRef, type RefObject } from 'react'
-import * as THREE from 'three'
-import type { Voice } from '@joycostudio/suno'
+import { useRef, type RefObject } from 'react'
+import { characterFeet } from '../lib/character-capsules'
+import { terrainHeight } from '../lib/terrain'
 import type { CharacterHandle } from '../scene/character'
-import { AUDIO_KEYS } from './audio-controller'
+import { FOOTSTEP_KEYS, type FootstepKey } from './audio-manifest'
+import { createFootTracker, createStepGate, type FootThresholds } from './footstep-detector'
+import { footstepGait } from './footstep-gait'
+import { createSpeedMeter } from './speed-meter'
 
-const RUN_SPEED_THRESHOLD = 6
-const MOVE_SPEED_THRESHOLD = 0.4
-const WALK_RATE = 0.55
-const RUN_RATE = 1.1
-const STOP_GRACE_MS = 120
-const FADE_MS = 80
+const FOOT_THRESHOLDS: FootThresholds = { plantAbove: 0.04, liftAbove: 0.1, baselineRisePerSecond: 0.15 }
+const WALK_VOLUME = 0.55
+const RUN_VOLUME = 0.9
+const VOLUME_JITTER = 0.15
+const RATE_JITTER = 0.08
+const RUN_RATE = 1.08
+const MIN_STEP_INTERVAL_S = 0.25
 
 type Props = {
   characterRef: RefObject<CharacterHandle | null>
 }
 
-// One looping voice of the grass-steps clip. We control:
-//  - playbackRate: WALK (slow → more time between footsteps in the clip)
-//                  RUN  (full speed)
-//  - volume: ramps up while moving, ramps down on stop
-// The clip already contains a sequence of footsteps, so per-step triggering
-// isn't needed — we just modulate the loop.
+function pickFootstep(previous: FootstepKey | null): FootstepKey {
+  const candidates = FOOTSTEP_KEYS.filter((key) => key !== previous)
+  return candidates[Math.floor(Math.random() * candidates.length)]
+}
+
+function jitter(amount: number): number {
+  return 1 + (Math.random() * 2 - 1) * amount
+}
+
+// One footstep sample per foot plant, detected from the animated ankle
+// heights — so every sound lands exactly when a foot touches the ground.
 export function AudioFeedback({ characterRef }: Props) {
   const suno = useSuno()
-  const lastPos = useRef(new THREE.Vector3())
-  const initialized = useRef(false)
-  const stepsVoice = useRef<Voice | null>(null)
-  const lastMoveTime = useRef(0)
+  const speedMeter = useRef(createSpeedMeter())
+  const leftFoot = useRef(createFootTracker(FOOT_THRESHOLDS))
+  const rightFoot = useRef(createFootTracker(FOOT_THRESHOLDS))
+  const lastSample = useRef<FootstepKey | null>(null)
+  const stepGate = useRef(createStepGate(MIN_STEP_INTERVAL_S))
 
-  // dispose voice on unmount
-  useEffect(() => {
-    return () => {
-      stepsVoice.current?.stop()
-      stepsVoice.current?.dispose()
-      stepsVoice.current = null
-    }
-  }, [])
+  useFrame(({ clock }, delta) => {
+    const character = characterRef.current
+    if (!character || !characterFeet.ready) return
 
-  useFrame((_, delta) => {
-    const char = characterRef.current
-    if (!char) return
-    if (!suno.isUnlocked) return
-    if (!suno.has(AUDIO_KEYS.steps)) return
+    const position = character.getPosition()
+    const speed = speedMeter.current.update(position.x, position.z, delta)
+    const gait = footstepGait(speed)
 
-    const pos = char.getPosition()
+    const { left, right } = characterFeet
+    const leftLanded = leftFoot.current.update(left.y - terrainHeight(left.x, left.z), delta)
+    const rightLanded = rightFoot.current.update(right.y - terrainHeight(right.x, right.z), delta)
+    if (gait === 'still' || !(leftLanded || rightLanded)) return
+    if (!suno.isUnlocked || !stepGate.current.tryStep(clock.elapsedTime)) return
 
-    if (!initialized.current) {
-      lastPos.current.copy(pos)
-      initialized.current = true
-      return
-    }
-
-    const dx = pos.x - lastPos.current.x
-    const dz = pos.z - lastPos.current.z
-    const moved = Math.hypot(dx, dz)
-    lastPos.current.copy(pos)
-
-    const speed = moved / Math.max(delta, 0.0001)
-    const isMoving = speed > MOVE_SPEED_THRESHOLD
-    const isRunning = speed > RUN_SPEED_THRESHOLD
-    const now = performance.now()
-    if (isMoving) lastMoveTime.current = now
-    const movedRecently = now - lastMoveTime.current < STOP_GRACE_MS
-
-    // start the loop once when first needed
-    if (movedRecently && !stepsVoice.current) {
-      const v = suno.get(AUDIO_KEYS.steps).play({
-        volume: 0,
-        loop: true,
-        playbackRate: WALK_RATE,
-      })
-      stepsVoice.current = v
-    }
-
-    const voice = stepsVoice.current
-    if (!voice) return
-
-    // target rate / volume
-    const targetRate = isRunning ? RUN_RATE : WALK_RATE
-    const targetVol = movedRecently ? (isRunning ? 0.85 : 0.55) : 0
-
-    // smooth changes
-    voice.setPlaybackRate(targetRate)
-    voice.rampVolume(targetVol, FADE_MS / 1000)
+    const key = pickFootstep(lastSample.current)
+    if (!suno.has(key)) return
+    lastSample.current = key
+    const running = gait === 'run'
+    suno.get(key).play({
+      volume: (running ? RUN_VOLUME : WALK_VOLUME) * jitter(VOLUME_JITTER),
+      playbackRate: (running ? RUN_RATE : 1) * jitter(RATE_JITTER),
+    })
   })
 
   return null

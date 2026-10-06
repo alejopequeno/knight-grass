@@ -1,30 +1,53 @@
 import { useProgress } from '@react-three/drei'
 import { useEffect, useState } from 'react'
+import { setSceneRevealed, useCharacterStatus } from './lib/load-state'
+import { prefersReducedMotion } from './lib/reduced-motion'
 
 const HOLD_AT_FULL_MS = 200
 const FADE_OUT_MS = 600
 
-// Solid black overlay that hides the scene until every loader registered
-// with THREE.DefaultLoadingManager (cloud texture, paladin FBX, animation
-// FBXs) has finished. Then it fades out and unmounts.
+// Solid black overlay that hides the scene until (a) every loader registered
+// with THREE.DefaultLoadingManager has finished and (b) the character has
+// explicitly reported ready. (b) closes the gap where the paladin's FBX loads
+// only start after the Suspense boundary resolves, which used to let the
+// curtain lift on an empty field.
 export function Curtain() {
-  const { active, progress, total } = useProgress()
+  const { active } = useProgress()
+  const characterStatus = useCharacterStatus()
   const [leaving, setLeaving] = useState(false)
   const [unmounted, setUnmounted] = useState(false)
 
+  const ready = characterStatus === 'ready' && !active
+
   useEffect(() => {
-    if (leaving) return
-    if (active || total === 0 || progress < 100) return
+    if (leaving || !ready) return
     const id = setTimeout(() => setLeaving(true), HOLD_AT_FULL_MS)
     return () => clearTimeout(id)
-  }, [active, progress, total, leaving])
+  }, [ready, leaving])
 
   useEffect(() => {
     if (!leaving) return
-    const id = setTimeout(() => setUnmounted(true), FADE_OUT_MS)
+    setSceneRevealed()
+    const fadeMs = prefersReducedMotion() ? 0 : FADE_OUT_MS
+    const id = setTimeout(() => setUnmounted(true), fadeMs)
     return () => clearTimeout(id)
   }, [leaving])
 
   if (unmounted) return null
-  return <div className={`curtain ${leaving ? 'curtain--leaving' : ''}`} />
+
+  if (characterStatus === 'failed') {
+    return (
+      <div className="curtain curtain--error" role="alert">
+        <p>La escena no se pudo cargar. Revisá tu conexión y recargá la página.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className={`curtain ${leaving ? 'curtain--leaving' : ''}`}
+      role="status"
+      aria-label={leaving ? undefined : 'Cargando escena'}
+    />
+  )
 }
