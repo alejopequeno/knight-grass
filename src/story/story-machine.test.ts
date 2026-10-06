@@ -151,7 +151,7 @@ describe('storyAnnouncements', () => {
       s = stepStory(s, { ...AT_SPAWN, delta: FRAME })
       heard.push(...storyAnnouncements(s, storyPresentation(s), said))
     }
-    expect(heard).toEqual(['BANNER', 'Luciérnagas: First.', 'Paladín: Answer.', 'Luciérnagas: Follow.'])
+    expect(heard).toEqual(['BANNER', 'Fireflies: First.', 'Paladin: Answer.', 'Fireflies: Follow.'])
   })
 })
 

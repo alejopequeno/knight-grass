@@ -11,20 +11,20 @@ type GateState =
 
 const FAILURE_COPY: Record<GateFailure, { title: string; body: string }> = {
   'no-api': {
-    title: 'Este experimento necesita WebGPU',
-    body: 'Abrilo en un Chrome, Edge o Safari (versión 26 o posterior) reciente, en escritorio.',
+    title: 'This experiment needs WebGPU',
+    body: 'Open it in a recent Chrome, Edge or Safari (version 26 or later) on desktop.',
   },
   'no-adapter': {
-    title: 'No se encontró una GPU compatible',
-    body: 'WebGPU está disponible pero no devolvió ningún adaptador. Probá actualizar el navegador o los drivers de video.',
+    title: 'No compatible GPU found',
+    body: 'WebGPU is available but no GPU adapter was returned. Try updating your browser or graphics drivers.',
   },
   'init-failed': {
-    title: 'El renderer no pudo arrancar',
-    body: 'WebGPU no se pudo inicializar en este dispositivo. Recargá la página para intentar de nuevo.',
+    title: 'The renderer failed to start',
+    body: 'WebGPU could not be initialised on this device. Reload the page to try again.',
   },
   'device-lost': {
-    title: 'Se perdió la conexión con la GPU',
-    body: 'La placa de video se reinició o se desconectó. Recargá la página para continuar.',
+    title: 'The GPU connection was lost',
+    body: 'Your graphics device was reset or removed. Reload the page to continue.',
   },
 }
 

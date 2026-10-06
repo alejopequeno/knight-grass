@@ -12,28 +12,28 @@ export type StoryBeat = {
 }
 
 export const STORY_SCRIPT: readonly StoryBeat[] = [
-  { id: 'follow', trigger: 'immediate', banner: 'LLANURA DE LOS CAÍDOS', line: 'Síguenos.' },
+  { id: 'follow', trigger: 'immediate', banner: 'PLAINS OF THE FALLEN', line: 'Follow us.' },
   {
     id: 'fabroos',
     trigger: 'arrive',
     waypoint: { x: 6, z: 38 },
-    line: 'Aquí yace Sir Fabroos.',
-    reply: 'Me protegió hasta el final.',
+    line: 'Here lies Sir Fabroos.',
+    reply: 'He shielded me until the end.',
   },
   {
     id: 'oath',
     trigger: 'arrive',
     waypoint: { x: -6, z: 80 },
-    banner: 'COLINA DEL JURAMENTO',
-    line: '¿Recuerdas el juramento?',
-    reply: 'Proteger a quienes no pueden alzar una espada.',
+    banner: 'HILL OF THE OATH',
+    line: 'Do you remember the oath?',
+    reply: 'To protect those who cannot raise a sword.',
   },
   {
     id: 'standard',
     trigger: 'arrive',
     waypoint: { x: 4, z: 120 },
-    line: 'Nuestro estandarte aún flamea.',
-    reply: 'Entonces esto no ha terminado.',
+    line: 'Our banner still flies.',
+    reply: 'Then this is not over.',
   },
 ]
 

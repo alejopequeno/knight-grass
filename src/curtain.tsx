@@ -38,7 +38,7 @@ export function Curtain() {
   if (characterStatus === 'failed') {
     return (
       <div className="curtain curtain--error" role="alert">
-        <p>La escena no se pudo cargar. Revisá tu conexión y recargá la página.</p>
+        <p>The scene failed to load. Check your connection and reload the page.</p>
       </div>
     )
   }
@@ -47,7 +47,7 @@ export function Curtain() {
     <div
       className={`curtain ${leaving ? 'curtain--leaving' : ''}`}
       role="status"
-      aria-label={leaving ? undefined : 'Cargando escena'}
+      aria-label={leaving ? undefined : 'Loading scene'}
     />
   )
 }

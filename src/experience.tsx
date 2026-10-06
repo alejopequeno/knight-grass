@@ -81,30 +81,30 @@ export function Experience({ onRendererFailure }: ExperienceProps) {
         <FollowCamera targetRef={characterRef} yawRef={cameraYawRef} movementRef={movementRef} />
         <RenderPipelineEffect />
       </Canvas>
-      <ul className="hud" aria-label="Controles">
+      <ul className="hud" aria-label="Controls">
         <li>
           <kbd>W</kbd>
           <kbd>A</kbd>
           <kbd>S</kbd>
-          <kbd>D</kbd> mover
+          <kbd>D</kbd> move
         </li>
         <li>
-          <kbd>Shift</kbd> correr
+          <kbd>Shift</kbd> run
         </li>
         <li>
-          <kbd>Espacio</kbd> saltar
+          <kbd>Space</kbd> jump
         </li>
         <li>
-          <kbd>F</kbd>/<kbd>Clic</kbd> atacar
+          <kbd>F</kbd>/<kbd>Click</kbd> attack
         </li>
         <li>
-          <kbd>Q</kbd>/<kbd>Clic der.</kbd> bloquear
+          <kbd>Q</kbd>/<kbd>Right click</kbd> block
         </li>
         <li>
           <kbd>J</kbd>
           <kbd>L</kbd>
           <kbd>I</kbd>
-          <kbd>K</kbd> o clic para mirar
+          <kbd>K</kbd> or click to look
         </li>
       </ul>
       <Curtain />

@@ -157,8 +157,8 @@ export function storyAnnouncements(
 ): string[] {
   const candidates: [kind: string, message: string | null][] = [
     ['banner', presentation.banner],
-    ['line', presentation.line && `Luciérnagas: ${presentation.line}`],
-    ['reply', presentation.reply && `Paladín: ${presentation.reply}`],
+    ['line', presentation.line && `Fireflies: ${presentation.line}`],
+    ['reply', presentation.reply && `Paladin: ${presentation.reply}`],
   ]
   const fresh: string[] = []
   for (const [kind, message] of candidates) {

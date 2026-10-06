@@ -28,7 +28,7 @@ test('Space on the focused sound button toggles it without being swallowed by th
   await waitForScene(page)
   await page.keyboard.press('Tab')
   // The name stays put; the toggle state lives in aria-pressed.
-  const button = page.getByRole('button', { name: 'Sonido', exact: true })
+  const button = page.getByRole('button', { name: 'Sound', exact: true })
   await expect(button).toBeFocused()
   // The first press may only unlock audio (any key gesture can): after it,
   // every press must flip the toggle.
@@ -37,7 +37,7 @@ test('Space on the focused sound button toggles it without being swallowed by th
   const settled = await button.getAttribute('aria-pressed')
   await page.keyboard.press('Space')
   await expect(button).toHaveAttribute('aria-pressed', settled === 'true' ? 'false' : 'true')
-  await expect(button).toHaveAccessibleName('Sonido')
+  await expect(button).toHaveAccessibleName('Sound')
 })
 
 test('canvas follows a viewport resize', async ({ page }) => {
@@ -63,14 +63,14 @@ test('shows the WebGPU gate when the API is missing', async ({ page }) => {
     Object.defineProperty(navigator, 'gpu', { value: undefined, configurable: true })
   })
   await page.goto('/')
-  await expect(page.getByRole('alert')).toContainText('necesita WebGPU')
+  await expect(page.getByRole('alert')).toContainText('needs WebGPU')
   await expect(page.locator('canvas')).toHaveCount(0)
 })
 
 test('a failed scene asset shows the load error, not the WebGPU gate', async ({ page }) => {
   await page.route('**/hdri/*.hdr', (route) => route.abort())
   await page.goto('/')
-  await expect(page.getByRole('alert')).toContainText('no se pudo cargar', { timeout: CURTAIN_TIMEOUT_MS })
+  await expect(page.getByRole('alert')).toContainText('failed to load', { timeout: CURTAIN_TIMEOUT_MS })
   await expect(page.getByRole('alert')).not.toContainText('renderer')
 })
 

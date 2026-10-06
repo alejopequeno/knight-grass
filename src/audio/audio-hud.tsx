@@ -7,7 +7,7 @@ export function AudioHud({ inert = false }: { inert?: boolean }) {
   const state = useSunoState()
   // Whether audio was still locked when this press began. The same gesture
   // unlocks it (suno listens on document, after React's root listeners), so
-  // by click time it already reads unlocked; without this, "activar" would
+  // by click time it already reads unlocked; without this, "enable" would
   // unlock and mute in one press.
   const lockedAtPressRef = useRef<boolean | null>(null)
 
@@ -21,9 +21,9 @@ export function AudioHud({ inert = false }: { inert?: boolean }) {
     if (!wasLocked) toggleMuted()
   }
 
-  const stateLabel = !state.isUnlocked ? 'activar' : muted ? 'apagado' : 'encendido'
+  const stateLabel = !state.isUnlocked ? 'enable' : muted ? 'off' : 'on'
 
-  // The name stays "Sonido"; aria-pressed carries on/off, so the visible
+  // The name stays "Sound"; aria-pressed carries on/off, so the visible
   // state word is hidden from assistive tech instead of read twice.
   return (
     <button
@@ -35,7 +35,7 @@ export function AudioHud({ inert = false }: { inert?: boolean }) {
       aria-pressed={state.isUnlocked && !muted}
       inert={inert}
     >
-      Sonido
+      Sound
       <span className="audio-hud__state" aria-hidden="true">
         {stateLabel}
       </span>
