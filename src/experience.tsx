@@ -9,6 +9,7 @@ import { AudioHud } from './audio/audio-hud'
 import { ErrorBoundary } from './components/error-boundary'
 import { useKeyboard } from './controls/use-keyboard'
 import { Curtain } from './curtain'
+import { useHudVisible } from './lib/hud-visibility'
 import { setCharacterStatus, useCharacterStatus } from './lib/load-state'
 import {
   createRendererFactory,
@@ -17,7 +18,9 @@ import {
 } from './renderer/create-renderer'
 import { RenderPipelineEffect } from './renderer/render-pipeline'
 import { Character, type CharacterHandle } from './scene/character'
+import { FieldProps } from './scene/field-props'
 import { FollowCamera } from './scene/follow-camera'
+import { Horizon } from './scene/horizon'
 import { Grass } from './grass/grass'
 import { FOLLOW_FOV } from './lib/camera-shot'
 import { StoryDirector } from './story/story-director'
@@ -43,6 +46,7 @@ type ExperienceProps = {
 
 export function Experience({ onRendererFailure }: ExperienceProps) {
   const movementRef = useKeyboard()
+  const hudVisible = useHudVisible()
   const characterRef = useRef<CharacterHandle>(null)
   const cameraYawRef = useRef(0)
   const characterStatus = useCharacterStatus()
@@ -70,6 +74,8 @@ export function Experience({ onRendererFailure }: ExperienceProps) {
               <Ground />
               <Character ref={characterRef} movementRef={movementRef} cameraYawRef={cameraYawRef} />
               <StoryProps />
+              <Horizon />
+              <FieldProps />
             </Physics>
             <PlayerUniformSync characterRef={characterRef} />
             <Grass />
@@ -81,7 +87,7 @@ export function Experience({ onRendererFailure }: ExperienceProps) {
         <FollowCamera targetRef={characterRef} yawRef={cameraYawRef} movementRef={movementRef} />
         <RenderPipelineEffect />
       </Canvas>
-      <ul className="hud" aria-label="Controls">
+      <ul className="hud" aria-label="Controls" data-idle={hudVisible}>
         <li>
           <kbd>W</kbd>
           <kbd>A</kbd>

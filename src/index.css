@@ -80,6 +80,14 @@ canvas {
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
   pointer-events: none;
   user-select: none;
+  /* Slow out, quick back: the list should never pull the eye off the field
+     while playing, but must be there the moment the player hesitates. */
+  transition: opacity 1.2s ease-out;
+}
+
+.hud[data-idle='false'] {
+  opacity: 0;
+  transition-duration: 2.4s;
 }
 
 .hud li {
@@ -208,6 +216,13 @@ canvas {
 
   .audio-hud:active {
     scale: none;
+  }
+
+  /* Self-hiding UI is a reading-speed trap: keep the controls up for good. */
+  .hud,
+  .hud[data-idle='false'] {
+    opacity: 1;
+    transition: none;
   }
 }
 

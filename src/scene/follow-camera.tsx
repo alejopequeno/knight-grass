@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import { createMovementState, type MovementState } from '../controls/use-keyboard'
 import { getCameraShot, type CameraShot } from '../lib/camera-shot'
 import { clampCameraHeight } from './camera-clearance'
+import { runFovBoost } from './camera-feel'
 import type { CharacterHandle } from './character'
 
 // Cinematic shot transitions: blend rate (1/s), slow dolly in while talking.
@@ -19,6 +20,9 @@ const LOOK_AT_HEIGHT = 1.4
 // makes it framerate-independent and keeps camera lag < ~0.3m when running.
 const POSITION_TAU = 0.08
 const TARGET_TAU = 0.05
+// Time constant for the speed the lens reacts to, so the field of view does
+// not twitch on single-frame velocity spikes.
+const SPEED_TAU = 0.25
 const MOUSE_SENSITIVITY = 0.0035
 // Keyboard orbit speeds (radians per second) for J/L and I/K.
 const KEY_YAW_SPEED = 2.2
@@ -59,6 +63,8 @@ export function FollowCamera({ targetRef, yawRef, movementRef }: FollowCameraPro
   const shotLook = useRef(new THREE.Vector3())
   const shotDir = useRef(new THREE.Vector3())
   const baseFovRef = useRef<number | null>(null)
+  const lastPos = useRef(new THREE.Vector3())
+  const smoothedSpeed = useRef(0)
 
   useEffect(() => {
     const isLocked = () => document.pointerLockElement === canvas
@@ -109,12 +115,17 @@ export function FollowCamera({ targetRef, yawRef, movementRef }: FollowCameraPro
     const pitch = pitchRef.current
     const horizontalDistance = CAMERA_DISTANCE * Math.cos(pitch)
     const verticalOffset = CAMERA_DISTANCE * Math.sin(pitch)
-
     desiredPos.current.set(
       pos.x - Math.sin(yaw) * horizontalDistance,
       pos.y + CAMERA_HEIGHT + verticalOffset,
       pos.z - Math.cos(yaw) * horizontalDistance,
     )
+
+    // Ground speed, measured here rather than threaded out of the character:
+    // the camera is the only thing that needs it and it costs one subtraction.
+    const frameSpeed = delta > 0 ? Math.hypot(pos.x - lastPos.current.x, pos.z - lastPos.current.z) / delta : 0
+    lastPos.current.set(pos.x, pos.y, pos.z)
+    smoothedSpeed.current = THREE.MathUtils.damp(smoothedSpeed.current, frameSpeed, 1 / SPEED_TAU, delta)
 
     const posAlpha = 1 - Math.exp(-delta / POSITION_TAU)
     const lookAlpha = 1 - Math.exp(-delta / TARGET_TAU)
@@ -136,7 +147,8 @@ export function FollowCamera({ targetRef, yawRef, movementRef }: FollowCameraPro
     const blend = THREE.MathUtils.smoothstep(shotBlendRef.current, 0, 1)
     if (camera instanceof THREE.PerspectiveCamera) {
       baseFovRef.current ??= camera.fov
-      applyFov(camera, held ? THREE.MathUtils.lerp(baseFovRef.current, held.fov, blend) : baseFovRef.current)
+      const freeFov = baseFovRef.current + runFovBoost(smoothedSpeed.current)
+      applyFov(camera, held ? THREE.MathUtils.lerp(freeFov, held.fov, blend) : freeFov)
     }
     if (held && blend > SHOT_BLEND_EPSILON) {
       const pushIn = Math.min(shotTimeRef.current / SHOT_PUSH_IN_S, 1) * SHOT_PUSH_IN_M

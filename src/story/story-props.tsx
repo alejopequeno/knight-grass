@@ -6,6 +6,7 @@ import { Mesh, TextureLoader } from 'three/webgpu'
 import { terrainHeight } from '../lib/terrain'
 import { applyBannerWind } from './banner-wind'
 import { STORY_SCRIPT, type StoryBeat, type Waypoint } from './story-script'
+import { TombEpitaph } from './tomb-epitaph'
 
 const PROP_URLS: Readonly<Record<string, string>> = {
   fabroos: '/models/props/tomb.glb',
@@ -59,6 +60,7 @@ export function StoryProps() {
             rotation={[0, PROP_YAW[beat.id] ?? 0, 0]}
           >
             <primitive object={gltfs[index].scene} />
+            {beat.epitaph && <TombEpitaph root={gltfs[index].scene} text={beat.epitaph} />}
           </RigidBody>
         )
       })}

@@ -186,3 +186,28 @@ describe('cinematic shot', () => {
     expect(storyPresentation(runUntilPhase(createStoryState(), 'guiding', {}, 120)).shot).toBeNull()
   })
 })
+
+describe('the reply burns in and out like the fireflies\' phrase', () => {
+  function presentationAt(phase: 'reply' | 'replyOut', phaseTime: number) {
+    const beatIndex = STORY_SCRIPT.findIndex((beat) => beat.reply)
+    return storyPresentation({ beatIndex, phase, phaseTime })
+  }
+
+  it('writes in from nothing to whole', () => {
+    expect(presentationAt('reply', 0).replyWipeIn).toBe(0)
+    expect(presentationAt('reply', 10).replyWipeIn).toBe(1)
+    expect(presentationAt('reply', 0).replyWipeOut).toBe(0)
+  })
+
+  it('burns away on the way out, rather than fading', () => {
+    expect(presentationAt('replyOut', 0).replyWipeOut).toBe(0)
+    expect(presentationAt('replyOut', STORY_TIMING.replyOut).replyWipeOut).toBe(1)
+    // Still fully written in while it burns off — the wipe does the exit.
+    expect(presentationAt('replyOut', STORY_TIMING.replyOut / 2).replyWipeIn).toBe(1)
+  })
+
+  it('shows nothing once the beat has moved on', () => {
+    const beatIndex = STORY_SCRIPT.findIndex((beat) => beat.reply)
+    expect(storyPresentation({ beatIndex, phase: 'guiding', phaseTime: 0 }).reply).toBeNull()
+  })
+})

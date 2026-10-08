@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { Matrix4, Quaternion, Vector3 } from 'three/webgpu'
-import { TITLE_DISTANCE, TITLE_HEIGHT, placeTitle } from './title-anchor'
+import { FOLLOW_FOV } from '../lib/camera-shot'
+import { TITLE_DISTANCE, TITLE_ELEVATION_DEG, placeTitle, titleRise } from './title-anchor'
 
 function decompose(matrix: Matrix4) {
   const position = new Vector3()
@@ -16,7 +17,7 @@ describe('placeTitle', () => {
     const { position } = decompose(matrix)
     expect(position.z).toBeCloseTo(TITLE_DISTANCE)
     expect(position.x).toBeCloseTo(0)
-    expect(position.y).toBeCloseTo(1 + TITLE_HEIGHT)
+    expect(position.y).toBeCloseTo(1 + titleRise(TITLE_DISTANCE))
   })
 
   it('turns the title to face the viewer', () => {
@@ -32,7 +33,7 @@ describe('placeTitle', () => {
     placeTitle(matrix, new Vector3(0, 0, 0), new Vector3(0, -3, 4))
     const { position } = decompose(matrix)
     expect(position.z).toBeCloseTo(TITLE_DISTANCE)
-    expect(position.y).toBeCloseTo(TITLE_HEIGHT)
+    expect(position.y).toBeCloseTo(titleRise(TITLE_DISTANCE))
   })
 })
 
@@ -43,5 +44,23 @@ describe('placeTitle scale', () => {
     const scale = new Vector3()
     matrix.decompose(new Vector3(), new Quaternion(), scale)
     expect(scale.x).toBeCloseTo(0.5)
+  })
+})
+
+describe('title elevation', () => {
+  // The follow camera looks about 19 degrees down at the paladin on flat
+  // ground, and tips further on a slope. A title has to clear that and still
+  // sit inside the top half of the lens.
+  const FOLLOW_DOWNWARD_DEG = 19
+  const SLOPE_ALLOWANCE_DEG = 10
+
+  it('stays inside the frame even with the camera tipped down a slope', () => {
+    const fromFrameCentre = TITLE_ELEVATION_DEG + FOLLOW_DOWNWARD_DEG + SLOPE_ALLOWANCE_DEG
+    expect(fromFrameCentre).toBeLessThan(FOLLOW_FOV / 2)
+  })
+
+  it('rises in step with distance, so the angle is what is pinned', () => {
+    expect(titleRise(90) / titleRise(45)).toBeCloseTo(2)
+    expect(Math.atan2(titleRise(45), 45) * (180 / Math.PI)).toBeCloseTo(TITLE_ELEVATION_DEG)
   })
 })

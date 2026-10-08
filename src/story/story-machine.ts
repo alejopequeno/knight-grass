@@ -96,9 +96,10 @@ export type StoryPresentation = {
   lineWipeIn: number
   lineWipeOut: number
   reply: string | null
-  /** 0 → fully scrambled, 1 → decoded. */
-  replyReveal: number
-  replyOpacity: number
+  /** 0 → unburned, 1 → fully written in. */
+  replyWipeIn: number
+  /** 0 → intact, 1 → fully burned away. */
+  replyWipeOut: number
   banner: string | null
   bannerWipeIn: number
   bannerWipeOut: number
@@ -112,7 +113,7 @@ export type StoryPresentation = {
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value))
 const LINE_WIPE_IN_S = 1.2
 const SHOT_PHASES: ReadonlySet<StoryPhase> = new Set(['title', 'line', 'dissolving', 'pause', 'reply', 'replyOut'])
-const REPLY_DECODE_S = 1.6
+const REPLY_WIPE_IN_S = 1.6
 
 export function storyPresentation(state: StoryState, script: readonly StoryBeat[] = STORY_SCRIPT): StoryPresentation {
   const beat = script[state.beatIndex]
@@ -136,8 +137,8 @@ export function storyPresentation(state: StoryState, script: readonly StoryBeat[
     lineWipeIn: phase === 'line' ? clamp01(phaseTime / LINE_WIPE_IN_S) : lineVisible ? 1 : 0,
     lineWipeOut: phase === 'dissolving' ? clamp01(phaseTime / t.dissolve) : 0,
     reply: replyVisible ? (beat?.reply ?? null) : null,
-    replyReveal: phase === 'reply' ? clamp01(phaseTime / REPLY_DECODE_S) : replyVisible ? 1 : 0,
-    replyOpacity: phase === 'replyOut' ? 1 - clamp01(phaseTime / t.replyOut) : replyVisible ? 1 : 0,
+    replyWipeIn: phase === 'reply' ? clamp01(phaseTime / REPLY_WIPE_IN_S) : replyVisible ? 1 : 0,
+    replyWipeOut: phase === 'replyOut' ? clamp01(phaseTime / t.replyOut) : 0,
     banner: bannerActive ? (beat?.banner ?? null) : null,
     bannerWipeIn: bannerActive ? clamp01(phaseTime / t.bannerIn) : 0,
     bannerWipeOut: bannerActive ? clamp01((phaseTime - t.bannerIn - t.bannerHold) / t.bannerOut) : 0,

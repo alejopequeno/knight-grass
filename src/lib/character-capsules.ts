@@ -1,4 +1,18 @@
-import { clamp, dot, float, length, max, min, step, uniformArray, vec2, vec3 } from 'three/tsl'
+import {
+  clamp,
+  dot,
+  float,
+  length,
+  max,
+  min,
+  oneMinus,
+  pow,
+  smoothstep,
+  step,
+  uniformArray,
+  vec2,
+  vec3,
+} from 'three/tsl'
 import { Vector3, Vector4, type Node, type Object3D } from 'three/webgpu'
 
 // Body parts the grass and fireflies avoid: each is a segment between two
@@ -89,6 +103,47 @@ export function capsuleGroundPushNode(point: Node<'vec2'>, reachY: Node<'float'>
     deepest = max(deepest, penetration.div(reach))
   })
   return vec3(push.x, push.y, deepest)
+}
+
+// How far the occlusion reaches past a capsule's own radius, at the contact
+// point. Everything here is deliberately short: what grounds a figure in deep
+// grass is the dark well his body makes around his feet, not a cast silhouette.
+const CONTACT_REACH = 0.55
+// Extra reach per metre the caster stands above the shaded point, so the pool
+// opens out under the torso instead of hugging it.
+const SPREAD_PER_METRE = 0.5
+// Occlusion from a caster this far above the point has faded out entirely.
+const VERTICAL_REACH = 2.1
+// Pushes the falloff toward the capsule, leaving a wide soft edge. A hard core
+// reads as a hole cut in the ground.
+const FALLOFF_POWER = 2.2
+// The light only skews the pool a little: at blue hour the sun sits on the
+// horizon, and projecting properly smears a black slab across the field.
+const LIGHT_SKEW = 0.35
+
+// Ambient occlusion (0 open → 1 enclosed) at a world point, from the body
+// capsules. Soft, short-range and barely directional on purpose.
+export function capsuleShadowNode(point: Node<'vec3'>, lightDirection: Node<'vec3'>): Node<'float'> {
+  // Lean the pool away from the light without ever detaching it from the body.
+  const skew = lightDirection.xz.mul(LIGHT_SKEW)
+  const leaned = (caster: Node<'vec3'>): Node<'vec2'> => caster.xz.sub(skew.mul(caster.y.sub(point.y)))
+
+  let shadow: Node<'float'> = float(0)
+  CAPSULE_DEFINITIONS.forEach((_, index) => {
+    const start = capsuleStarts.element(index)
+    const end = capsuleEnds.element(index)
+    const a = leaned(start.xyz)
+    const ab = leaned(end.xyz).sub(a)
+    const t = clamp(dot(point.xz.sub(a), ab).div(max(dot(ab, ab), MIN_LENGTH)), 0, 1)
+    const distance = length(point.xz.sub(a.add(ab.mul(t))))
+
+    const height = max(min(start.y, end.y).sub(point.y), 0)
+    const reach = start.w.add(CONTACT_REACH).add(height.mul(SPREAD_PER_METRE))
+    const nearness = oneMinus(smoothstep(float(0), reach, distance))
+    const falloff = oneMinus(smoothstep(float(0), float(VERTICAL_REACH), height))
+    shadow = max(shadow, pow(nearness, FALLOFF_POWER).mul(falloff))
+  })
+  return shadow
 }
 
 // 3D push that moves `point` out of every capsule (plus margin).

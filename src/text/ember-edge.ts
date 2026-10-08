@@ -1,4 +1,10 @@
-import type { TextEffect } from 'lettra/three'
+import {
+  composeEffects,
+  wipe,
+  type ComposedEffect,
+  type TextEffect,
+  type WipeEffect,
+} from 'lettra/three'
 import { color, mix, smoothstep } from 'three/tsl'
 import type { Color } from 'three/webgpu'
 
@@ -18,4 +24,11 @@ export function emberEdge(ember: Color): TextEffect {
       color: (prev, { erosion }) => mix(prev, emberColor, smoothstep(EMBER_EDGE_START, EMBER_EDGE_END, erosion)),
     },
   }
+}
+
+export type BurningEffect = ComposedEffect<[WipeEffect, TextEffect]>
+
+/** A wipe whose front burns: the shared reveal for every text in the world. */
+export function burning(band: number, ember: Color): BurningEffect {
+  return composeEffects(wipe({ band }), emberEdge(ember))
 }

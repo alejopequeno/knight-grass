@@ -28,3 +28,6 @@ test-results/
 playwright-report/
 .superpowers/
 .font-work/
+
+# Blender working files (.blend, scratch exports) — local only
+blender-work/

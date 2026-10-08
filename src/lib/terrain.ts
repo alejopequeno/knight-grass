@@ -13,7 +13,10 @@ type TerrainOctave = {
 }
 
 const TERRAIN_OCTAVES: readonly TerrainOctave[] = [
-  { frequencyX: 0.04, frequencyZ: 0.04, phaseX: 0, phaseZ: 0, amplitude: 1.5 },
+  // Landform octave: ~300 m across, tall enough that crests break the skyline
+  // and valleys hide their far side. Zero-phase in x so the spawn stays level.
+  { frequencyX: 0.021, frequencyZ: 0.017, phaseX: 0, phaseZ: 0.9, amplitude: 5 },
+  { frequencyX: 0.04, frequencyZ: 0.04, phaseX: 0, phaseZ: 0, amplitude: 2.6 },
   { frequencyX: 0.13, frequencyZ: 0.11, phaseX: 2, phaseZ: 1, amplitude: 0.6 },
   { frequencyX: 0.28, frequencyZ: 0.31, phaseX: -1, phaseZ: -2, amplitude: 0.25 },
 ]

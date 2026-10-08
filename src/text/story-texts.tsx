@@ -1,25 +1,19 @@
 import { useFrame } from '@react-three/fiber'
 import { useEffect, useRef, type RefObject } from 'react'
-import {
-  composeEffects,
-  createText,
-  scramble,
-  wipe,
-  type ComposedEffect,
-  type ScrambleEffect,
-  type TextEffect,
-  type TextHandle,
-  type WipeEffect,
-} from 'lettra/three'
+import { createText, type TextEffect, type TextHandle } from 'lettra/three'
 import { Color, Group, MeshBasicNodeMaterial, Vector3, type Matrix4 } from 'three/webgpu'
 import { useReducedMotion } from '../lib/reduced-motion'
 import type { StoryPresentation } from '../story/story-machine'
-import { emberEdge } from './ember-edge'
+import { burning, type BurningEffect } from './ember-edge'
 import { useStoryFont, type StoryFont } from './text-assets'
 
 // Phrase the fireflies write: warm and above 1.0 so the bloom picks it up.
 const LINE_COLOR = new Color('#ffd58a').multiplyScalar(2.2)
 const REPLY_COLOR = '#e9e4d8'
+// The reply burns in like the fireflies' phrase, just cooler and tighter:
+// it is the paladin answering in the same hand, not a different device.
+const REPLY_EMBER = new Color('#ffb15e').multiplyScalar(2.6)
+const REPLY_WIPE_BAND = 0.2
 const BANNER_COLOR = '#f1e6c8'
 // Hot front of the burning wipe (HDR so the bloom flares it).
 const LINE_EMBER = new Color('#ff7a1f').multiplyScalar(4)
@@ -36,21 +30,14 @@ const REPLY_HEAD_OFFSET = 2.3
 const REPLY_RENDER_ORDER = 10
 const LINE_WIPE_BAND = 0.25
 const BANNER_WIPE_BAND = 0.4
-const REPLY_SCRAMBLE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÁÉÍÓÚÑ'
 // Reduced motion: wipes finish twice as fast.
 const REDUCED_MOTION_WIPE_SPEED = 2
 const EMPTY_TEXT = ' '
 
-type BurningEffect = ComposedEffect<[WipeEffect, TextEffect]>
-
 type StoryTextHandles = {
   line: TextHandle<BurningEffect>
-  reply: TextHandle<ScrambleEffect>
+  reply: TextHandle<BurningEffect>
   banner: TextHandle<BurningEffect>
-}
-
-function burning(band: number, ember: Color): BurningEffect {
-  return composeEffects(wipe({ band }), emberEdge(ember))
 }
 
 function createHandles({ font, map }: StoryFont): StoryTextHandles {
@@ -69,7 +56,7 @@ function createHandles({ font, map }: StoryFont): StoryTextHandles {
     text: EMPTY_TEXT,
     geometry: { scale: metresPerPx(REPLY_SIZE) },
     layout: { align: 'center', maxWidth: font.size * REPLY_MAX_WIDTH_EM },
-    material: { fill: REPLY_COLOR, effect: scramble({ font, chars: REPLY_SCRAMBLE_CHARS }) },
+    material: { fill: REPLY_COLOR, effect: burning(REPLY_WIPE_BAND, REPLY_EMBER) },
   })
   const banner = createText({
     font,
@@ -111,7 +98,7 @@ export function StoryTexts({ presentationRef, lineAnchorRef, titleAnchorRef, hea
   const groupRef = useRef<Group>(null)
   const handlesRef = useRef<StoryTextHandles | null>(null)
   const shownLineRef = useRef(new Map<TextHandle<BurningEffect>, string>())
-  const shownReplyRef = useRef(new Map<TextHandle<ScrambleEffect>, string>())
+  const shownReplyRef = useRef(new Map<TextHandle<BurningEffect>, string>())
 
   useEffect(() => {
     const group = groupRef.current
@@ -154,8 +141,8 @@ export function StoryTexts({ presentationRef, lineAnchorRef, titleAnchorRef, hea
       reply.mesh.position.copy(headRef.current)
       reply.mesh.position.y += REPLY_HEAD_OFFSET
       reply.mesh.quaternion.copy(camera.quaternion)
-      reply.uniforms.scramble.value = reducedMotion ? 0 : 1 - p.replyReveal
-      reply.uniforms.opacity.value = p.replyOpacity
+      reply.uniforms.wipeIn.value = Math.min(1, p.replyWipeIn * wipeSpeed)
+      reply.uniforms.wipeOut.value = Math.min(1, p.replyWipeOut * wipeSpeed)
     }
 
     banner.mesh.visible = p.banner !== null

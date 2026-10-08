@@ -15,8 +15,10 @@ export const atmosphere = {
   moonDirection: uniform(directionFromAngles(35, 14)),
   fogColor: uniform(new Color('#18202f')),
   horizonColor: uniform(new Color('#6b4a52')),
-  fogNear: uniform(25),
-  fogFar: uniform(70),
+  // Far enough that the landform crests stay readable and separate from each
+  // other by haze instead of being swallowed by a fog wall at mid-distance.
+  fogNear: uniform(35),
+  fogFar: uniform(145),
   groundFogTop: uniform(1.4),
   groundFogBottom: uniform(-0.5),
   groundFogDensity: uniform(0.55),
@@ -25,7 +27,9 @@ export const atmosphere = {
   backlightIntensity: uniform(1),
   moonIntensity: uniform(2),
   sunIntensity: uniform(1.5),
-  rimIntensity: uniform(0.15),
+  // The rim is now gated on facing the moon, so it needs real strength to
+  // carve the paladin's silhouette out of a field this dark.
+  rimIntensity: uniform(3.4),
   exposure: uniform(0.7),
   environmentIntensity: uniform(0.35),
 }

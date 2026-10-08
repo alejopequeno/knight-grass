@@ -31,6 +31,7 @@ import {
 } from 'three/tsl'
 import { atmosphere } from '../atmosphere/atmosphere'
 import { DoubleSide, MeshBasicNodeMaterial } from 'three/webgpu'
+import { capsuleShadowNode } from '../lib/character-capsules'
 import { playerPosition } from '../lib/shared-uniforms'
 import { terrainHeightNode } from '../lib/terrain'
 import { grassAlbedoNode } from './grass-color'
@@ -52,6 +53,10 @@ const AO_FADE_END = 40
 const TRANSLUCENCY_POWER = 4
 const SPEC_EPSILON = 1e-4
 const MIN_COMPENSATED_DENSITY = 0.25
+// How much light the body can take away. Deep grass under a figure is dark,
+// but never black: driving this near 1 cuts a hole in the field.
+const SHADOW_STRENGTH = 0.55
+const SHADOW_AMBIENT_SHARE = 0.4
 const UP = vec3(0, 1, 0)
 
 // Builds one blade from its compute state: a quadratic Bezier from the root
@@ -145,6 +150,13 @@ export function createGrassMaterial(state: RingState): MeshBasicNodeMaterial {
     const aoMin = mix(u.aoNear, u.aoFar, smoothstep(AO_FADE_START, AO_FADE_END, vDistance))
     const ao = mix(aoMin, float(1), vT)
 
+    // The body closes the field in around itself: blades at his feet lose
+    // most of their light, and it opens back up within about a metre. That
+    // short dark well is what plants him in the grass.
+    const shadow = capsuleShadowNode(positionWorld, sunL)
+    const lit = oneMinus(shadow.mul(SHADOW_STRENGTH))
+    const shadowedAmbient = oneMinus(shadow.mul(SHADOW_AMBIENT_SHARE))
+
     // Backlit translucency: tips glow when looking toward the sun.
     const backlight = pow(max(dot(v.negate(), sunL), 0), TRANSLUCENCY_POWER)
     const translucency = albedo.mul(atmosphere.sunColor).mul(backlight).mul(vT.mul(vT)).mul(u.translucency)
@@ -154,7 +166,8 @@ export function createGrassMaterial(state: RingState): MeshBasicNodeMaterial {
     const sinHT = sqrt(max(oneMinus(halfVector.y.mul(halfVector.y)), SPEC_EPSILON))
     const spec = atmosphere.sunColor.mul(pow(sinHT, u.specShininess)).mul(u.specStrength).mul(vT)
 
-    return vec4(albedo.mul(direct.add(ambient)).mul(ao).add(translucency).add(spec), 1)
+    const shaded = direct.mul(lit).add(ambient.mul(shadowedAmbient))
+    return vec4(albedo.mul(shaded).mul(ao).add(translucency.mul(lit)).add(spec.mul(lit)), 1)
   })()
   return material
 }

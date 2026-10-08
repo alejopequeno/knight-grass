@@ -9,6 +9,8 @@ export type StoryBeat = {
   banner?: string
   line: string
   reply?: string
+  /** Carved into this beat's prop, readable up close. Newlines break lines. */
+  epitaph?: string
 }
 
 export const STORY_SCRIPT: readonly StoryBeat[] = [
@@ -19,6 +21,10 @@ export const STORY_SCRIPT: readonly StoryBeat[] = [
     waypoint: { x: 6, z: 38 },
     line: 'Here lies Sir Fabroos.',
     reply: 'He shielded me until the end.',
+    // Just the epitaph: the headstone model already carries the name and the
+    // cross cut into the stone above this. Short lines because the band left
+    // under the carving is wider than it is tall.
+    epitaph: 'SHIELD OF\nTHE ORDER\nHE DID NOT\nSTEP ASIDE',
   },
   {
     id: 'oath',
