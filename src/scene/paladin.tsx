@@ -1,10 +1,11 @@
 import { useFrame } from '@react-three/fiber'
 import { useEffect, useRef, useState, type RefObject } from 'react'
 import * as THREE from 'three'
-import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js'
 import { toRimLitMaterial } from '../atmosphere/moon-rim'
 import { findCapsuleBones, updateCharacterCapsules, type CapsuleBones } from '../lib/character-capsules'
 import { setCharacterStatus } from '../lib/load-state'
+import { PALADIN_ANIMATION_URLS, PALADIN_MODEL_URL } from '../loading/asset-manifest'
+import { loadAsset } from '../loading/assets'
 import {
   PALADIN_STATES,
   PaladinAnimator,
@@ -15,18 +16,6 @@ import { mapPaladinStates } from './paladin-states'
 
 export type { PaladinState } from './paladin-animator'
 
-const MODEL_URL = '/models/paladin.fbx'
-const ANIM_URLS: Record<PaladinState, string> = {
-  idle: '/models/anim-idle.fbx',
-  idle2: '/models/anim-idle2.fbx',
-  walk: '/models/anim-walk.fbx',
-  run: '/models/anim-run.fbx',
-  strafeLeft: '/models/anim-strafe-left.fbx',
-  strafeRight: '/models/anim-strafe-right.fbx',
-  jump: '/models/anim-jump.fbx',
-  attack: '/models/anim-attack.fbx',
-  block: '/models/anim-block.fbx',
-}
 const MODEL_SCALE = 0.018
 const SPEED_DAMPING = 9.75
 
@@ -45,10 +34,8 @@ type LoadedPaladin = {
   capsuleBones: CapsuleBones | null
 }
 
-const fbxLoader = new FBXLoader()
-
 function loadFbx(url: string): Promise<THREE.Group> {
-  return fbxLoader.loadAsync(url)
+  return loadAsset(url, 'fbx')
 }
 
 async function loadOptionalClip(url: string): Promise<THREE.AnimationClip | null> {
@@ -111,17 +98,6 @@ function buildClips(rawClips: (THREE.AnimationClip | null)[]): PaladinClips | nu
   })
 }
 
-function disposeModel(model: THREE.Object3D): void {
-  model.traverse((object) => {
-    if (!(object instanceof THREE.Mesh)) return
-    object.geometry.dispose()
-    const materials: THREE.Material[] = Array.isArray(object.material)
-      ? object.material
-      : [object.material]
-    materials.forEach((material) => material.dispose())
-  })
-}
-
 export function Paladin({ stateRef, speedRef, onActionFinished }: Props) {
   const [loaded, setLoaded] = useState<LoadedPaladin | null>(null)
   const smoothedSpeed = useRef(1)
@@ -137,13 +113,10 @@ export function Paladin({ stateRef, speedRef, onActionFinished }: Props) {
 
     async function load(): Promise<void> {
       const [model, ...rawClips] = await Promise.all([
-        loadFbx(MODEL_URL),
-        ...PALADIN_STATES.map((state) => loadOptionalClip(ANIM_URLS[state])),
+        loadFbx(PALADIN_MODEL_URL),
+        ...PALADIN_STATES.map((state) => loadOptionalClip(PALADIN_ANIMATION_URLS[state])),
       ])
-      if (cancelled) {
-        disposeModel(model)
-        return
-      }
+      if (cancelled) return
 
       const clips = buildClips(rawClips)
       if (!clips) throw new Error('idle clip missing — cannot animate the paladin')
@@ -165,11 +138,11 @@ export function Paladin({ stateRef, speedRef, onActionFinished }: Props) {
       setCharacterStatus('failed')
     })
 
+    // The model itself is a session-wide cached asset (one paladin per page),
+    // so only the per-mount animator is torn down.
     return () => {
       cancelled = true
-      if (!built) return
-      built.animator.dispose()
-      disposeModel(built.model)
+      built?.animator.dispose()
     }
   }, [])
 

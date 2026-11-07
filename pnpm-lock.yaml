@@ -11,6 +11,9 @@ importers:
       '@joycostudio/suno':
         specifier: ^0.3.1
         version: 0.3.1(react@19.2.5)
+      '@joycostudio/susano':
+        specifier: ^1.1.0
+        version: 1.1.0(react@19.2.5)
       '@react-three/drei':
         specifier: ^10.7.7
         version: 10.7.7(@react-three/fiber@9.6.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(three@0.185.1))(@types/react@19.2.14)(@types/three@0.185.4)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(three@0.185.1)
@@ -306,6 +309,11 @@ packages:
 
   '@joycostudio/suno@0.3.1':
     resolution: {integrity: sha512-pv/CU3WwvqorOrhdHXlfgLhWDsxAEzncye9uW9SarXMbX1w2gg+sqFV5xC4cCltoE+YpfKq674OF4GYhlDUwzw==}
+    peerDependencies:
+      react: '>=16.8.0'
+
+  '@joycostudio/susano@1.1.0':
+    resolution: {integrity: sha512-wM9sOXqcOjvbI/5usV/4ITmIHdHTFyMA4JvUFPOcBv+ArswSNuKhwXQ5fY1OeAwDBMzlJCyGOhu8HsdmP7Ktyw==}
     peerDependencies:
       react: '>=16.8.0'
 
@@ -2134,6 +2142,11 @@ snapshots:
   '@humanwhocodes/retry@0.4.3': {}
 
   '@joycostudio/suno@0.3.1(react@19.2.5)':
+    dependencies:
+      react: 19.2.5
+      tiny-emitter: 2.1.0
+
+  '@joycostudio/susano@1.1.0(react@19.2.5)':
     dependencies:
       react: 19.2.5
       tiny-emitter: 2.1.0

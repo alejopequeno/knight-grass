@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
+import { FIELD_PROPS_URL } from '../loading/asset-manifest'
 import { colliderFor, fieldPropInstances } from './field-props-layout'
 import { ScatteredProps } from './scattered-props'
 
-const FIELD_URL = '/models/props/field.glb'
 // Bed each one into the ground; the scans have uneven bases.
 const EMBED_DEPTH = 0.18
 
@@ -15,7 +15,7 @@ export function FieldProps() {
   const instances = useMemo(() => fieldPropInstances(), [])
   return (
     <ScatteredProps
-      url={FIELD_URL}
+      url={FIELD_PROPS_URL}
       instances={instances}
       colliderFor={colliderFor}
       embedDepth={EMBED_DEPTH}

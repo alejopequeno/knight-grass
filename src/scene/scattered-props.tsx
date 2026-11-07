@@ -1,9 +1,8 @@
-import { useLoader } from '@react-three/fiber'
 import { CuboidCollider, CylinderCollider, RigidBody } from '@react-three/rapier'
-import { useLayoutEffect, useMemo, useRef } from 'react'
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import { use, useLayoutEffect, useMemo, useRef } from 'react'
 import { InstancedMesh, Matrix4, Mesh, Quaternion, Vector3 } from 'three/webgpu'
 import { terrainHeight } from '../lib/terrain'
+import { loadAsset } from '../loading/assets'
 
 const UP = new Vector3(0, 1, 0)
 
@@ -59,7 +58,7 @@ export function ScatteredProps({
   castShadow = false,
   receiveShadow = false,
 }: Props) {
-  const gltf = useLoader(GLTFLoader, url)
+  const gltf = use(loadAsset(url, 'gltf'))
   const meshRefs = useRef(new Map<string, InstancedMesh>())
 
   const groups = useMemo<VariantGroup[]>(() => {

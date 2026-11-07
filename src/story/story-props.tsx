@@ -1,20 +1,14 @@
-import { useLoader } from '@react-three/fiber'
 import { RigidBody } from '@react-three/rapier'
-import { useEffect } from 'react'
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
-import { Mesh, TextureLoader } from 'three/webgpu'
+import { use, useEffect } from 'react'
+import type { GLTF } from 'three/addons/loaders/GLTFLoader.js'
+import { Mesh, type Texture } from 'three/webgpu'
 import { terrainHeight } from '../lib/terrain'
+import { EMBLEM_URL, STORY_PROP_URLS } from '../loading/asset-manifest'
+import { loadAsset } from '../loading/assets'
 import { applyBannerWind } from './banner-wind'
 import { STORY_SCRIPT, type StoryBeat, type Waypoint } from './story-script'
 import { TombEpitaph } from './tomb-epitaph'
 
-const PROP_URLS: Readonly<Record<string, string>> = {
-  fabroos: '/models/props/tomb.glb',
-  oath: '/models/props/stones.glb',
-  standard: '/models/props/standard.glb',
-}
-// The order's emblem, stamped on the standard's banner.
-const EMBLEM_URL = '/textures/order-emblem.png'
 // Props face the player arriving from the previous waypoint (-z): turn the
 // tomb so its carved face greets them.
 const PROP_YAW: Readonly<Record<string, number>> = { fabroos: Math.PI, standard: Math.PI }
@@ -22,15 +16,28 @@ const PROP_YAW: Readonly<Record<string, number>> = { fabroos: Math.PI, standard:
 type PropBeat = StoryBeat & { waypoint: Waypoint }
 
 function isPropBeat(beat: StoryBeat): beat is PropBeat {
-  return beat.waypoint !== undefined && PROP_URLS[beat.id] !== undefined
+  return beat.waypoint !== undefined && STORY_PROP_URLS[beat.id] !== undefined
 }
 
 const PROP_BEATS: readonly PropBeat[] = STORY_SCRIPT.filter(isPropBeat)
-const PROP_MODEL_URLS = PROP_BEATS.map((beat) => PROP_URLS[beat.id])
+const PROP_MODEL_URLS = PROP_BEATS.map((beat) => STORY_PROP_URLS[beat.id])
+
+type PropAssets = readonly [gltfs: GLTF[], emblem: Texture]
+
+// One promise for the component's lifetime: use() must see the same one on
+// every render.
+let propAssets: Promise<PropAssets> | null = null
+
+function loadPropAssets(): Promise<PropAssets> {
+  propAssets ??= Promise.all([
+    Promise.all(PROP_MODEL_URLS.map((url) => loadAsset(url, 'gltf'))),
+    loadAsset(EMBLEM_URL, 'texture'),
+  ])
+  return propAssets
+}
 
 export function StoryProps() {
-  const gltfs = useLoader(GLTFLoader, PROP_MODEL_URLS)
-  const emblem = useLoader(TextureLoader, EMBLEM_URL)
+  const [gltfs, emblem] = use(loadPropAssets())
 
   useEffect(() => {
     for (const gltf of gltfs) applyBannerWind(gltf.scene, emblem)

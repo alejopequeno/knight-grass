@@ -1,15 +1,14 @@
 import { useFrame } from '@react-three/fiber'
 import { useControls } from 'leva'
 import { use, useEffect } from 'react'
-import * as THREE from 'three'
-import { HDRLoader } from 'three/addons/loaders/HDRLoader.js'
 import { SkyMesh } from 'three/addons/objects/SkyMesh.js'
+import { NIGHT_HDRI_URL } from '../loading/asset-manifest'
+import { loadAsset } from '../loading/assets'
 import { atmosphere } from './atmosphere'
 import { heightFogNode } from './height-fog'
 import { Fireflies } from './fireflies'
 import { Stars } from './stars'
 
-const NIGHT_HDRI_URL = '/hdri/dikhololo-night-1k.hdr'
 const SKY_SCALE = 450000
 const SKY_CLOUD_COVERAGE = 0.3
 const SKY_CLOUD_DENSITY = 0.3
@@ -24,16 +23,8 @@ sky.showSunDisc.value = 0
 sky.cloudCoverage.value = SKY_CLOUD_COVERAGE
 sky.cloudDensity.value = SKY_CLOUD_DENSITY
 
-const nightHdri: Promise<THREE.DataTexture> = new HDRLoader().loadAsync(NIGHT_HDRI_URL).then((texture) => {
-  texture.mapping = THREE.EquirectangularReflectionMapping
-  return texture
-})
-// Mark the rejection handled even if <Sky> never mounts (e.g. WebGPU gate);
-// a mounted <Sky> still receives it through use() and its error boundary.
-nightHdri.catch((error: unknown) => console.error('[sky] night HDRI failed to load:', error))
-
 export function Sky() {
-  const environment = use(nightHdri)
+  const environment = use(loadAsset(NIGHT_HDRI_URL, 'environment'))
   const c = useControls('sky', {
     turbidity: { value: 5, min: 0, max: 20, step: 0.1 },
     rayleigh: { value: 2.6, min: 0, max: 4, step: 0.05 },

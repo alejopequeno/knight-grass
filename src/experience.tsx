@@ -1,6 +1,6 @@
 import { Canvas } from '@react-three/fiber'
 import { Physics } from '@react-three/rapier'
-import { Suspense, useCallback, useMemo, useRef } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useRef } from 'react'
 import { AtmosphereControls } from './atmosphere/atmosphere-controls'
 import { Lights } from './atmosphere/lights'
 import { Sky } from './atmosphere/sky'
@@ -11,6 +11,7 @@ import { useKeyboard } from './controls/use-keyboard'
 import { Curtain } from './curtain'
 import { useHudVisible } from './lib/hud-visibility'
 import { setCharacterStatus, useCharacterStatus } from './lib/load-state'
+import { startScenePreload } from './loading/assets'
 import {
   createRendererFactory,
   instantiateWebGPURenderer,
@@ -55,6 +56,11 @@ export function Experience({ onRendererFailure }: ExperienceProps) {
   const handleSceneError = useCallback((error: unknown) => {
     console.error('[scene] failed to load:', error)
     setCharacterStatus('failed')
+  }, [])
+  // Fetch every scene file up front, in parallel, so the curtain can show
+  // real progress; components then pick their asset out of the same cache.
+  useEffect(() => {
+    startScenePreload()
   }, [])
   const rendererFactory = useMemo(
     () => createRendererFactory({ onFailure: onRendererFailure, instantiate: instantiateWebGPURenderer }),

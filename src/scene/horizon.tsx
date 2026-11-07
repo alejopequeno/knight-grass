@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
+import { HORIZON_URL } from '../loading/asset-manifest'
 import { colliderFor, horizonInstances } from './horizon-layout'
 import { ScatteredProps } from './scattered-props'
 
-const HORIZON_URL = '/models/props/horizon.glb'
 // Sink each base so no silhouette hovers over a slope it straddles.
 const EMBED_DEPTH = 0.3
 
